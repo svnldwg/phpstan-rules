@@ -1,0 +1,8 @@
+rules:
+	- Svnldwg\PHPStan\Rules\ImmutableObjectRule
+
+services:
+	-
+		class: Svnldwg\PHPStan\Rules\ImmutableObjectRule
+		tags:
+			- phpstan.rules.rule

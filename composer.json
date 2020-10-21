@@ -1,0 +1,41 @@
+{
+  "name": "svnldwg/phpstan-rules",
+  "type": "phpstan-extension",
+  "description": "Provides additional rules for phpstan/phpstan",
+  "keywords": [
+    "phpstan",
+    "phpstan-rules"
+  ],
+  "homepage": "https://github.com/svnldwg/phpstan-rules",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Sven Ludwig",
+      "email": "s.ludwig.g@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^7.2",
+    "ext-mbstring": "*",
+    "nikic/php-parser": "^4.2.3",
+    "phpstan/phpstan": "^0.12.0"
+  },
+  "require-dev": {
+  },
+  "config": {
+    "preferred-install": "dist",
+    "sort-packages": true
+  },
+  "extra": {
+    "phpstan": {
+      "includes": [
+        "rules.neon"
+      ]
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Svnldwg\\PHPStan\\": "src/"
+    }
+  }
+}
