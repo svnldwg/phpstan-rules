@@ -43,7 +43,7 @@ class ImmutableObjectRule implements Rule
         }
         
         $nodes = $this->parser->parseFile($scope->getFile());
-        echo $scope->getFile().PHP_EOL;
+        
         if (!$this->classHasWhitelistedAnnotation($nodes)) {
             return [];
         }
