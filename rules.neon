@@ -1,6 +1,3 @@
-rules:
-	- Svnldwg\PHPStan\Rules\ImmutableObjectRule
-
 services:
 	-
 		class: Svnldwg\PHPStan\Rules\ImmutableObjectRule
