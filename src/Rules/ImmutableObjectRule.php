@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Svnldwg\PHPStan\Rules;
 
@@ -21,9 +22,7 @@ class ImmutableObjectRule implements Rule
         'immutable',
     ];
 
-    /**
-     * @var \PHPStan\Parser\Parser
-     */
+    /** @var \PHPStan\Parser\Parser */
     private $parser;
 
     public function __construct(\PHPStan\Parser\Parser $parser)
@@ -45,36 +44,36 @@ class ImmutableObjectRule implements Rule
         if (!$scope->isInClass()) {
             return [];
         }
-        
+
         $nodes = $this->parser->parseFile($scope->getFile());
-        
+
         $immutableProperties = null;
         if (!$this->classHasWhitelistedAnnotation($nodes)) {
             $immutableProperties = $this->propertiesWithWhitelistedAnnotations($nodes);
-            
+
             if (empty($immutableProperties)) {
                 return [];
             }
         }
-        
+
         while ($node->var instanceof Node\Expr\ArrayDimFetch) {
             $node = $node->var;
         }
-        
+
         if (!empty($immutableProperties)
             && property_exists($node->var, 'name')
             && !in_array((string)$node->var->name, $immutableProperties)
         ) {
             return [];
         }
-        
+
         if (
             !$node->var instanceof Node\Expr\PropertyFetch
             && !$node->var instanceof Node\Expr\StaticPropertyFetch
         ) {
             return [];
         }
-        
+
         if ($scope->getFunctionName() === '__construct') {
             return [];
         }
@@ -86,7 +85,7 @@ class ImmutableObjectRule implements Rule
         if (!is_string($propertyName)) {
             $propertyName = '';
         }
-        
+
         if ($scope->getFunction() instanceof ClassMemberReflection && $scope->getFunction()->isPrivate()) {
             return [
                 RuleErrorBuilder::message(sprintf(
@@ -94,17 +93,17 @@ class ImmutableObjectRule implements Rule
                     empty($immutableProperties) ? 'Class' : 'Property',
                     $propertyName,
                     $scope->getFunctionName()
-                ))->build()
+                ))->build(),
             ];
         }
-                        
+
         return [
             RuleErrorBuilder::message(sprintf(
                 '%s is declared immutable, but class property "%s" is modified in method "%s"',
                 empty($immutableProperties) ? 'Class' : 'Property',
                 $propertyName,
                 $scope->getFunctionName()
-            ))->build()
+            ))->build(),
         ];
     }
 
@@ -123,15 +122,16 @@ class ImmutableObjectRule implements Rule
                     if (!is_array($subNode)) {
                         $subNode = [$subNode];
                     }
-                    
+
                     $result = $this->classHasWhitelistedAnnotation($subNode);
                     if ($result) {
                         return true;
                     }
                 }
+
                 continue;
             }
-            
+
             if ($node instanceof Node\Stmt\Class_) {
                 $whitelisted = $this->isWhitelisted($node);
                 if ($whitelisted) {
@@ -139,18 +139,19 @@ class ImmutableObjectRule implements Rule
                 }
             }
         }
-        
+
         return false;
     }
 
     /**
      * @param array<Node> $nodes
+     *
      * @return array<int, string>
      */
     private function propertiesWithWhitelistedAnnotations(array $nodes): array
     {
         $whitelistedProperties = [];
-        
+
         foreach ($nodes as $node) {
             if ($node instanceof Node\Stmt\Namespace_ || $node instanceof Node\Stmt\Declare_) {
                 $subNodeNames = $node->getSubNodeNames();
@@ -165,18 +166,19 @@ class ImmutableObjectRule implements Rule
                         return $result;
                     }
                 }
+
                 continue;
             }
 
             if ($node instanceof Node\Stmt\Class_) {
                 foreach ($node->stmts as $property) {
-                    if(!$property instanceof Node\Stmt\Property) {
+                    if (!$property instanceof Node\Stmt\Property) {
                         continue;
                     }
-                    
+
                     $whitelisted = $this->isWhitelisted($property);
                     if ($whitelisted) {
-                        foreach($property->props as $prop) {
+                        foreach ($property->props as $prop) {
                             $whitelistedProperties[] = (string)$prop->name;
                         }
                     }
@@ -186,11 +188,11 @@ class ImmutableObjectRule implements Rule
 
         return $whitelistedProperties;
     }
-    
+
     private function isWhitelisted(Node $node): bool
     {
         $docComment = $node->getDocComment();
-        
+
         if (!$docComment instanceof Doc) {
             return false;
         }
@@ -204,7 +206,7 @@ class ImmutableObjectRule implements Rule
                 }
             }
         }
-        
+
         return false;
     }
 }

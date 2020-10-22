@@ -36,3 +36,7 @@ composer-update:
 phpstan: ##@development run phpstan
 	$(CLI) vendor/bin/phpstan analyze -c dev/phpstan.neon
 .PHONY: phpstan
+
+php-cs-fixer: ##@development run php-cs-fixer
+	$(CLI) ./vendor/bin/php-cs-fixer fix --config=dev/csfixer.php_cs
+.PHONY: php-cs-fixer
