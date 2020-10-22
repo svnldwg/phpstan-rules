@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  phpstan-rules:
+    build:
+      context: .
+    volumes:
+      - ../:/var/www/html
+    stdin_open: true
+    tty: true

@@ -7,9 +7,13 @@ use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
 use PHPStan\Analyser\Scope;
+use PHPStan\Reflection\ClassMemberReflection;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
+/**
+ * @template-implements Rule<Node>
+ */
 class ImmutableObjectRule implements Rule
 {
     private const WHITELISTED_ANNOTATIONS = [
@@ -57,7 +61,10 @@ class ImmutableObjectRule implements Rule
             $node = $node->var;
         }
         
-        if (!empty($immutableProperties) && !in_array((string)$node->var->name, $immutableProperties)) {
+        if (!empty($immutableProperties)
+            && property_exists($node->var, 'name')
+            && !in_array((string)$node->var->name, $immutableProperties)
+        ) {
             return [];
         }
         
@@ -71,13 +78,21 @@ class ImmutableObjectRule implements Rule
         if ($scope->getFunctionName() === '__construct') {
             return [];
         }
+
+        $propertyName = $node->var->name;
+        if ($propertyName instanceof Node\Identifier) {
+            $propertyName = (string)$propertyName;
+        }
+        if (!is_string($propertyName)) {
+            $propertyName = '';
+        }
         
-        if ($scope->getFunction() && $scope->getFunction()->isPrivate()) {
+        if ($scope->getFunction() instanceof ClassMemberReflection && $scope->getFunction()->isPrivate()) {
             return [
                 RuleErrorBuilder::message(sprintf(
                     '%s is declared immutable, but class property "%s" is modified in private method "%s" which could be called from outside the constructor',
                     empty($immutableProperties) ? 'Class' : 'Property',
-                    $node->var->name,
+                    $propertyName,
                     $scope->getFunctionName()
                 ))->build()
             ];
@@ -87,7 +102,7 @@ class ImmutableObjectRule implements Rule
             RuleErrorBuilder::message(sprintf(
                 '%s is declared immutable, but class property "%s" is modified in method "%s"',
                 empty($immutableProperties) ? 'Class' : 'Property',
-                $node->var->name,
+                $propertyName,
                 $scope->getFunctionName()
             ))->build()
         ];
@@ -128,6 +143,10 @@ class ImmutableObjectRule implements Rule
         return false;
     }
 
+    /**
+     * @param array<Node> $nodes
+     * @return array<int, string>
+     */
     private function propertiesWithWhitelistedAnnotations(array $nodes): array
     {
         $whitelistedProperties = [];

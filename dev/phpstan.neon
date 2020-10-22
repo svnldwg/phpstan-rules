@@ -1,0 +1,6 @@
+includes:
+parameters:
+  level: max
+  inferPrivatePropertyTypeFromConstructor: true
+  paths:
+    - %currentWorkingDirectory%/src/
