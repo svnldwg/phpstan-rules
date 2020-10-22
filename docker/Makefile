@@ -33,10 +33,18 @@ composer-update:
 	$(CLI_COMPOSER) update
 .PHONY: composer-update
 
+composer-dump-autoload:
+	$(CLI_COMPOSER) dump-autoload -a
+.PHONY: composer-dump-autoload
+
 phpstan: ##@development run phpstan
-	$(CLI) vendor/bin/phpstan analyze -c dev/phpstan.neon
+	$(CLI) vendor/bin/phpstan analyze -c dev/phpstan.neon --memory-limit=1G
 .PHONY: phpstan
 
 php-cs-fixer: ##@development run php-cs-fixer
 	$(CLI) ./vendor/bin/php-cs-fixer fix --config=dev/csfixer.php_cs
 .PHONY: php-cs-fixer
+
+tests:
+	$(CLI) ./vendor/bin/phpunit --configuration=test/Integration/phpunit.xml
+.PHONY: tests
