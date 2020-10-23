@@ -22,11 +22,15 @@ use Svnldwg\PHPStan\Test\Integration\AbstractTestCase;
  */
 final class ImmutableObjectRuleTest extends AbstractTestCase
 {
+    /**
+     * @return iterable<string,string[]>
+     */
     public function provideCasesWhereAnalysisShouldSucceed(): iterable
     {
         $paths = [
-            'immutable-class' => __DIR__ . '/../../Fixture/ImmutableObjectRule/Success/ImmutableClass.php',
-            'not-annotated'   => __DIR__ . '/../../Fixture/ImmutableObjectRule/Success/NotAnnotated.php',
+            'immutable-class'    => __DIR__ . '/../../Fixture/ImmutableObjectRule/Success/ImmutableClass.php',
+            'immutable-property' => __DIR__ . '/../../Fixture/ImmutableObjectRule/Success/ImmutableProperty.php',
+            'not-annotated'      => __DIR__ . '/../../Fixture/ImmutableObjectRule/Success/NotAnnotated.php',
         ];
 
         foreach ($paths as $description => $path) {
@@ -39,11 +43,18 @@ final class ImmutableObjectRuleTest extends AbstractTestCase
     public function provideCasesWhereAnalysisShouldFail(): iterable
     {
         $paths = [
-            'mutable-class' => [
-                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/MutableClass.php',
+            'class-with-public-setter' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/ClassWithPublicSetter.php',
                 [
                     'Class is declared immutable, but class property "value" is modified in method "setValue"',
                     16,
+                ],
+            ],
+            'immutable-property-mutated' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/ImmutablePropertyMutated.php',
+                [
+                    'Property is declared immutable, but class property "mutable" is modified in method "mutate"',
+                    26,
                 ],
             ],
         ];

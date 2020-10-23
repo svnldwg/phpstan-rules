@@ -5,3 +5,5 @@ parameters:
   paths:
     - %currentWorkingDirectory%/src/
     - %currentWorkingDirectory%/test/
+  excludes_analyse:
+    - %currentWorkingDirectory%/test/Fixture/*

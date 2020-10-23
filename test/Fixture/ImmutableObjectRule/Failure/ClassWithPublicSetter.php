@@ -7,7 +7,7 @@ namespace Svnldwg\PHPStan\Test\Fixture\ImmutableObjectRule\Failure;
 /**
  * @immutable
  */
-class MutableClass
+class ClassWithPublicSetter
 {
     private $value;
 
