@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Svnldwg\PHPStan\Rules;
 
-use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ClassMemberReflection;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
+use Svnldwg\PHPStan\Helper\AnnotationParser;
 
 /**
  * @template-implements Rule<Node>
@@ -48,8 +48,8 @@ class ImmutableObjectRule implements Rule
         $nodes = $this->parser->parseFile($scope->getFile());
 
         $immutableProperties = null;
-        if (!$this->classHasWhitelistedAnnotation($nodes)) {
-            $immutableProperties = $this->propertiesWithWhitelistedAnnotations($nodes);
+        if (!AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes)) {
+            $immutableProperties = AnnotationParser::propertiesWithWhitelistedAnnotations(self::WHITELISTED_ANNOTATIONS, $nodes);
 
             if (empty($immutableProperties)) {
                 return [];
@@ -105,108 +105,5 @@ class ImmutableObjectRule implements Rule
                 $scope->getFunctionName()
             ))->build(),
         ];
-    }
-
-    /**
-     * @param Node[] $nodes
-     *
-     * @return bool
-     */
-    private function classHasWhitelistedAnnotation(array $nodes): bool
-    {
-        foreach ($nodes as $node) {
-            if ($node instanceof Node\Stmt\Namespace_ || $node instanceof Node\Stmt\Declare_) {
-                $subNodeNames = $node->getSubNodeNames();
-                foreach ($subNodeNames as $subNodeName) {
-                    $subNode = $node->{$subNodeName};
-                    if (!is_array($subNode)) {
-                        $subNode = [$subNode];
-                    }
-
-                    $result = $this->classHasWhitelistedAnnotation($subNode);
-                    if ($result) {
-                        return true;
-                    }
-                }
-
-                continue;
-            }
-
-            if ($node instanceof Node\Stmt\Class_) {
-                $whitelisted = $this->isWhitelisted($node);
-                if ($whitelisted) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param array<Node> $nodes
-     *
-     * @return array<int, string>
-     */
-    private function propertiesWithWhitelistedAnnotations(array $nodes): array
-    {
-        $whitelistedProperties = [];
-
-        foreach ($nodes as $node) {
-            if ($node instanceof Node\Stmt\Namespace_ || $node instanceof Node\Stmt\Declare_) {
-                $subNodeNames = $node->getSubNodeNames();
-                foreach ($subNodeNames as $subNodeName) {
-                    $subNode = $node->{$subNodeName};
-                    if (!is_array($subNode)) {
-                        $subNode = [$subNode];
-                    }
-
-                    $result = $this->propertiesWithWhitelistedAnnotations($subNode);
-                    if (!empty($result)) {
-                        return $result;
-                    }
-                }
-
-                continue;
-            }
-
-            if ($node instanceof Node\Stmt\Class_) {
-                foreach ($node->stmts as $property) {
-                    if (!$property instanceof Node\Stmt\Property) {
-                        continue;
-                    }
-
-                    $whitelisted = $this->isWhitelisted($property);
-                    if ($whitelisted) {
-                        foreach ($property->props as $prop) {
-                            $whitelistedProperties[] = (string)$prop->name;
-                        }
-                    }
-                }
-            }
-        }
-
-        return $whitelistedProperties;
-    }
-
-    private function isWhitelisted(Node $node): bool
-    {
-        $docComment = $node->getDocComment();
-
-        if (!$docComment instanceof Doc) {
-            return false;
-        }
-
-        if (is_int(preg_match_all('/@(\S+)(?=\s|$)/', $docComment->getReformattedText(), $matches))) {
-            foreach ($matches[1] as $annotation) {
-                foreach (self::WHITELISTED_ANNOTATIONS as $whitelistedAnnotation) {
-                    if (0 === mb_strpos($annotation, $whitelistedAnnotation)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
     }
 }
