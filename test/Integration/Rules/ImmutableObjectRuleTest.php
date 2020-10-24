@@ -57,6 +57,13 @@ final class ImmutableObjectRuleTest extends AbstractTestCase
                     26,
                 ],
             ],
+            'mutation-in-child-class' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/MutationInChildClass.php',
+                [
+                    'Class is declared immutable, but class property "value" is modified in method "setValue"',
+                    26,
+                ],
+            ],
         ];
 
         foreach ($paths as $description => [$path, $error]) {

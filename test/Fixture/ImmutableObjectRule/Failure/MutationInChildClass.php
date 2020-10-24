@@ -7,12 +7,7 @@ namespace Svnldwg\PHPStan\Test\Fixture\ImmutableObjectRule\Failure;
 /**
  * @immutable
  */
-class ClassWithPublicSetter
+class MutationInChildClass
 {
-    private $value;
-
-    public function setValue($value)
-    {
-        $this->value = $value;
-    }
+    protected $value;
 }
