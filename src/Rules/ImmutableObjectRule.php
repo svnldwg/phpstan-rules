@@ -11,6 +11,7 @@ use PHPStan\Reflection\ClassMemberReflection;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use Svnldwg\PHPStan\Helper\AnnotationParser;
+use Svnldwg\PHPStan\Helper\NodeParser;
 
 /**
  * @template-implements Rule<Node>
@@ -45,11 +46,15 @@ class ImmutableObjectRule implements Rule
             return [];
         }
 
+        $immutableProperties = $this->getParentClasses($scope);
+
         $nodes = $this->parser->parseFile($scope->getFile());
 
-        $immutableProperties = null;
         if (!AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes)) {
-            $immutableProperties = AnnotationParser::propertiesWithWhitelistedAnnotations(self::WHITELISTED_ANNOTATIONS, $nodes);
+            $immutableProperties = array_merge(
+                $immutableProperties,
+                AnnotationParser::propertiesWithWhitelistedAnnotations(self::WHITELISTED_ANNOTATIONS, $nodes)
+            );
 
             if (empty($immutableProperties)) {
                 return [];
@@ -105,5 +110,39 @@ class ImmutableObjectRule implements Rule
                 $scope->getFunctionName()
             ))->build(),
         ];
+    }
+
+    private function getParentClasses(Scope $scope): array
+    {
+        if ($scope->getClassReflection() === null) {
+            return [];
+        }
+
+        $immutableParentProperties = [];
+
+        // TODO: consider multiple layers of inheritance (parent 1 is not declared immutable, but parent 2 is, so properties of parent 1 need to inherit immutability
+
+        foreach ($scope->getClassReflection()->getParents() as $parent) {
+            $fileName = $parent->getFileName();
+            if (!$fileName) {
+                continue;
+            }
+
+            $nodes = $this->parser->parseFile($fileName);
+            $classNode = NodeParser::getClassNode($nodes);
+            if (!$classNode) {
+                continue;
+            }
+
+            if (AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes)) {
+                $immutableParentProperties += array_map(static function (Node\Stmt\Property $property): string {
+                    return (string)reset($property->props)->name;
+                }, NodeParser::getNonPrivateProperties($classNode));
+            }
+
+            // @TODO: detect non private parent properties annotated as immutable
+        }
+
+        return $immutableParentProperties;
     }
 }

@@ -40,4 +40,31 @@ class NodeParser
 
         return null;
     }
+
+    /**
+     * @param Node\Stmt\Class_ $classNode
+     *
+     * @return Node\Stmt\Property[]
+     */
+    public static function getClassProperties(Node\Stmt\Class_ $classNode): array
+    {
+        $properties = [];
+
+        foreach ($classNode->stmts as $property) {
+            if ($property instanceof Node\Stmt\Property) {
+                $properties[] = $property;
+            }
+        }
+
+        return $properties;
+    }
+
+    public static function getNonPrivateProperties(Node\Stmt\Class_ $classNode): array
+    {
+        $properties = self::getClassProperties($classNode);
+
+        return array_filter($properties, static function (Node\Stmt\Property $property): bool {
+            return !$property->isPrivate();
+        });
+    }
 }

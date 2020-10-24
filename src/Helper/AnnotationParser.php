@@ -40,11 +40,8 @@ class AnnotationParser
             return $whitelistedProperties;
         }
 
-        foreach ($classNode->stmts as $property) {
-            if (!$property instanceof Node\Stmt\Property) {
-                continue;
-            }
-
+        $classProperties = NodeParser::getClassProperties($classNode);
+        foreach ($classProperties as $property) {
             $whitelisted = self::isWhitelisted($property, $annotations);
             if ($whitelisted) {
                 foreach ($property->props as $prop) {
@@ -58,6 +55,7 @@ class AnnotationParser
 
     /**
      * @param Node $node
+     *
      * @return string[]
      */
     public static function getAnnotations(Node $node): array
