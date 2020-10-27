@@ -58,10 +58,31 @@ final class ImmutableObjectRuleTest extends AbstractTestCase
                 ],
             ],
             'mutation-in-child-class' => [
-                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/MutationInChildClassChild.php',
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/Inheritance/Basic/MutationInChildClassChild.php',
                 [
                     'Property is declared immutable, but class property "value" is modified in method "setValue"',
                     11,
+                ],
+            ],
+            'deep-inheritance' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/Inheritance/Deep/ChildClass.php',
+                [
+                    'Property is declared immutable, but class property "parentValue" is modified in method "mutate"',
+                    11,
+                ],
+            ],
+            'mutate-child-property-with-immutable-parent' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/Inheritance/MutateChildPropertyWithImmutableParent/ChildPropertyMutation.php',
+                [
+                    'Class is declared immutable, but class property "childProperty" is modified in method "setChildProperty"',
+                    13,
+                ],
+            ],
+            'mutate-immutable-parent-property' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/Inheritance/MutateChildPropertyWithImmutableParent/ChildPropertyMutation2.php',
+                [
+                    'Property is declared immutable, but class property "immu" is modified in method "set"',
+                    13,
                 ],
             ],
         ];

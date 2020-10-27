@@ -11,6 +11,8 @@ use PHPStan\Reflection\ClassMemberReflection;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use Svnldwg\PHPStan\Helper\AnnotationParser;
+use Svnldwg\PHPStan\Helper\BackwardsIterator;
+use Svnldwg\PHPStan\Helper\Converter;
 use Svnldwg\PHPStan\Helper\NodeParser;
 
 /**
@@ -46,19 +48,26 @@ class ImmutableObjectRule implements Rule
             return [];
         }
 
-        $immutableProperties = $this->getParentClasses($scope);
+        [$immutableProperties, $hasImmutableParent] = $this->getInheritedImmutableProperties($scope);
 
         $nodes = $this->parser->parseFile($scope->getFile());
+        $hasImmutableClassAnnotation = AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes);
 
-        if (!AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes)) {
-            $immutableProperties = array_merge(
-                $immutableProperties,
-                AnnotationParser::propertiesWithWhitelistedAnnotations(self::WHITELISTED_ANNOTATIONS, $nodes)
-            );
-
-            if (empty($immutableProperties)) {
-                return [];
+        if (!empty($immutableProperties)) {
+            $classNode = NodeParser::getClassNode($nodes);
+            if ($classNode !== null) {
+                $classProperties = NodeParser::getClassProperties($classNode);
+                $classPropertyNames = Converter::propertyStringNames($classProperties);
+                $immutableProperties = array_merge($immutableProperties, $classPropertyNames);
             }
+        }
+
+        if (empty($immutableProperties)) {
+            $immutableProperties = AnnotationParser::propertiesWithWhitelistedAnnotations(self::WHITELISTED_ANNOTATIONS, $nodes);
+        }
+
+        if (!$hasImmutableParent && !$hasImmutableClassAnnotation && empty($immutableProperties)) {
+            return [];
         }
 
         while ($node->var instanceof Node\Expr\ArrayDimFetch) {
@@ -112,7 +121,12 @@ class ImmutableObjectRule implements Rule
         ];
     }
 
-    private function getParentClasses(Scope $scope): array
+    /**
+     * @param Scope $scope
+     *
+     * @return array<string[]>
+     */
+    private function getInheritedImmutableProperties(Scope $scope): array
     {
         if ($scope->getClassReflection() === null) {
             return [];
@@ -120,9 +134,10 @@ class ImmutableObjectRule implements Rule
 
         $immutableParentProperties = [];
 
-        // TODO: consider multiple layers of inheritance (parent 1 is not declared immutable, but parent 2 is, so properties of parent 1 need to inherit immutability
-
-        foreach ($scope->getClassReflection()->getParents() as $parent) {
+        $parents = $scope->getClassReflection()->getParents();
+        $parentsTopDown = BackwardsIterator::iterateBackwards($parents);
+        $hasImmutableParent = false;
+        foreach ($parentsTopDown as $parent) {
             $fileName = $parent->getFileName();
             if (!$fileName) {
                 continue;
@@ -134,15 +149,15 @@ class ImmutableObjectRule implements Rule
                 continue;
             }
 
-            if (AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes)) {
-                $immutableParentProperties += array_map(static function (Node\Stmt\Property $property): string {
-                    return (string)reset($property->props)->name;
-                }, NodeParser::getNonPrivateProperties($classNode));
+            if ($hasImmutableParent || AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes)) {
+                $hasImmutableParent = true;
+
+                $immutableParentProperties += Converter::propertyStringNames(NodeParser::getNonPrivateProperties($classNode));
             }
 
-            // @TODO: detect non private parent properties annotated as immutable
+            // @TODO: detect non private parent properties annotated as immutable (instead of whole class)
         }
 
-        return $immutableParentProperties;
+        return [$immutableParentProperties, $hasImmutableParent];
     }
 }
