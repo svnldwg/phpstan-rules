@@ -16,7 +16,12 @@ class Converter
     public static function propertyStringNames(array $properties)
     {
         return array_map(static function (Node\Stmt\Property $property): string {
-            return (string)reset($property->props)->name;
+            $firstProp = reset($property->props);
+            if ($firstProp === false) {
+                return '';
+            }
+
+            return (string)$firstProp->name;
         }, $properties);
     }
 }

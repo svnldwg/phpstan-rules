@@ -40,6 +40,9 @@ final class ImmutableObjectRuleTest extends AbstractTestCase
         }
     }
 
+    /**
+     * @return iterable<string,array>
+     */
     public function provideCasesWhereAnalysisShouldFail(): iterable
     {
         $paths = [
@@ -95,6 +98,9 @@ final class ImmutableObjectRuleTest extends AbstractTestCase
         }
     }
 
+    /**
+     * @return Rule<\PhpParser\Node>
+     */
     protected function getRule(): Rule
     {
         $lexer = new Lexer();

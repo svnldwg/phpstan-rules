@@ -48,7 +48,7 @@ class ImmutableObjectRule implements Rule
             return [];
         }
 
-        [$immutableProperties, $hasImmutableParent] = $this->getInheritedImmutableProperties($scope);
+        ['properties' => $immutableProperties, 'hasImmutableParent' => $hasImmutableParent] = $this->getInheritedImmutableProperties($scope);
 
         $nodes = $this->parser->parseFile($scope->getFile());
         $hasImmutableClassAnnotation = AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes);
@@ -124,12 +124,12 @@ class ImmutableObjectRule implements Rule
     /**
      * @param Scope $scope
      *
-     * @return array<string[]>
+     * @return array{properties: string[], hasImmutableParent: bool}
      */
     private function getInheritedImmutableProperties(Scope $scope): array
     {
         if ($scope->getClassReflection() === null) {
-            return [];
+            return ['properties' => [], 'hasImmutableParent' => false];
         }
 
         $immutableParentProperties = [];
@@ -158,6 +158,6 @@ class ImmutableObjectRule implements Rule
             // @TODO: detect non private parent properties annotated as immutable (instead of whole class)
         }
 
-        return [$immutableParentProperties, $hasImmutableParent];
+        return ['properties' => $immutableParentProperties, 'hasImmutableParent' => $hasImmutableParent];
     }
 }

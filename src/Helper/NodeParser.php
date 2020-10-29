@@ -59,6 +59,11 @@ class NodeParser
         return $properties;
     }
 
+    /**
+     * @param Node\Stmt\Class_ $classNode
+     *
+     * @return array<Node\Stmt\Property>
+     */
     public static function getNonPrivateProperties(Node\Stmt\Class_ $classNode): array
     {
         $properties = self::getClassProperties($classNode);

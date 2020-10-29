@@ -2,8 +2,8 @@ export PROJECT_NAME = phpstan-rules
 export SHELL = bash
 
 DOCKER_COMPOSE = docker-compose
-CLI = $(DOCKER_COMPOSE) exec -T ${PROJECT_NAME}
-CLI_COMPOSER = $(DOCKER_COMPOSE) exec -T ${PROJECT_NAME} php -d memory_limit=-1 /usr/bin/composer
+CLI = $(DOCKER_COMPOSE) run -T ${PROJECT_NAME}
+CLI_COMPOSER = $(DOCKER_COMPOSE) run -T ${PROJECT_NAME} php -d memory_limit=-1 /usr/bin/composer
 
 start:
 	$(DOCKER_COMPOSE) up -d
@@ -48,3 +48,6 @@ php-cs-fixer: ##@development run php-cs-fixer
 tests:
 	$(CLI) ./vendor/bin/phpunit --configuration=test/Integration/phpunit.xml
 .PHONY: tests
+
+check: php-cs-fixer phpstan tests
+.PHONY: check

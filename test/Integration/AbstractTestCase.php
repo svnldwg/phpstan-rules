@@ -26,8 +26,8 @@ abstract class AbstractTestCase extends RuleTestCase
     /**
      * @dataProvider provideCasesWhereAnalysisShouldFail
      *
-     * @param string $path
-     * @param array  $error
+     * @param string            $path
+     * @param array<string|int> $error
      */
     final public function testAnalysisFails(string $path, array $error): void
     {
@@ -41,7 +41,13 @@ abstract class AbstractTestCase extends RuleTestCase
         );
     }
 
+    /**
+     * @return iterable<string,string[]>
+     */
     abstract public function provideCasesWhereAnalysisShouldSucceed(): iterable;
 
+    /**
+     * @return iterable<string,array>
+     */
     abstract public function provideCasesWhereAnalysisShouldFail(): iterable;
 }
