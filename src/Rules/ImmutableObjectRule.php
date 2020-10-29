@@ -9,6 +9,7 @@ use PhpParser\Node\Expr\Assign;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ClassMemberReflection;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 use Svnldwg\PHPStan\Helper\AnnotationParser;
 use Svnldwg\PHPStan\Helper\BackwardsIterator;
@@ -28,6 +29,13 @@ class ImmutableObjectRule implements Rule
     /** @var \PHPStan\Parser\Parser */
     private $parser;
 
+    /** @var string */
+    private $currentClass = '';
+    /** @var string[] */
+    private $immutableProperties = [];
+    /** @var bool */
+    private $isImmutable = false;
+
     public function __construct(\PHPStan\Parser\Parser $parser)
     {
         $this->parser = $parser;
@@ -40,7 +48,10 @@ class ImmutableObjectRule implements Rule
 
     public function processNode(Node $node, Scope $scope): array
     {
-        if (!$node instanceof Node\Expr\AssignOp && !$node instanceof Assign) {
+        if (!$node instanceof Node\Expr\AssignOp
+            && !$node instanceof Assign
+            && !$node instanceof Node\Stmt\Property
+        ) {
             return [];
         }
 
@@ -48,41 +59,31 @@ class ImmutableObjectRule implements Rule
             return [];
         }
 
-        ['properties' => $immutableProperties, 'hasImmutableParent' => $hasImmutableParent] = $this->getInheritedImmutableProperties($scope);
+        $this->detectImmutableProperties($scope);
 
-        $nodes = $this->parser->parseFile($scope->getFile());
-        $hasImmutableClassAnnotation = AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes);
-
-        if (!empty($immutableProperties)) {
-            $classNode = NodeParser::getClassNode($nodes);
-            if ($classNode !== null) {
-                $classProperties = NodeParser::getClassProperties($classNode);
-                $classPropertyNames = Converter::propertyStringNames($classProperties);
-                $immutableProperties = array_merge($immutableProperties, $classPropertyNames);
-            }
-        }
-
-        if (empty($immutableProperties)) {
-            $immutableProperties = AnnotationParser::propertiesWithWhitelistedAnnotations(self::WHITELISTED_ANNOTATIONS, $nodes);
-        }
-
-        if (!$hasImmutableParent && !$hasImmutableClassAnnotation && empty($immutableProperties)) {
+        $isImmutable = $this->isImmutable;
+        $immutableProperties = $this->immutableProperties;
+        if (!$isImmutable && empty($immutableProperties)) {
             return [];
+        }
+
+        if ($node instanceof Node\Stmt\Property) {
+            return $this->assertImmutablePropertyIsNotPublic($node);
         }
 
         while ($node->var instanceof Node\Expr\ArrayDimFetch) {
             $node = $node->var;
         }
 
-        if (!empty($immutableProperties)
+        if (!$isImmutable
+            && !empty($immutableProperties)
             && property_exists($node->var, 'name')
             && !in_array((string)$node->var->name, $immutableProperties)
         ) {
             return [];
         }
 
-        if (
-            !$node->var instanceof Node\Expr\PropertyFetch
+        if (!$node->var instanceof Node\Expr\PropertyFetch
             && !$node->var instanceof Node\Expr\StaticPropertyFetch
         ) {
             return [];
@@ -159,5 +160,70 @@ class ImmutableObjectRule implements Rule
         }
 
         return ['properties' => $immutableParentProperties, 'hasImmutableParent' => $hasImmutableParent];
+    }
+
+    /**
+     * @param Scope $scope
+     */
+    private function detectImmutableProperties(Scope $scope): void
+    {
+        $classReflection = $scope->getClassReflection();
+        if ($classReflection === null) {
+            $this->isImmutable = false;
+            $this->immutableProperties = [];
+            $this->currentClass = '';
+
+            return;
+        }
+        $currentClassName = $classReflection->getName();
+        if ($this->currentClass === $currentClassName) {
+            return;
+        }
+
+        ['properties' => $immutableProperties, 'hasImmutableParent' => $hasImmutableParent] = $this->getInheritedImmutableProperties($scope);
+
+        $nodes = $this->parser->parseFile($scope->getFile());
+        $isImmutable = $hasImmutableParent || AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes);
+
+        if (!empty($immutableProperties)) {
+            $classNode = NodeParser::getClassNode($nodes);
+            if ($classNode !== null) {
+                $classProperties = NodeParser::getClassProperties($classNode);
+                $classPropertyNames = Converter::propertyStringNames($classProperties);
+                $immutableProperties = array_merge($immutableProperties, $classPropertyNames);
+            }
+        }
+
+        if (empty($immutableProperties)) {
+            $immutableProperties = AnnotationParser::propertiesWithWhitelistedAnnotations(self::WHITELISTED_ANNOTATIONS, $nodes);
+        }
+
+        $this->immutableProperties = $immutableProperties;
+        $this->isImmutable = $isImmutable;
+        $this->currentClass = $classReflection->getName();
+    }
+
+    /**
+     * @param Node\Stmt\Property $property
+     *
+     * @throws \PHPStan\ShouldNotHappenException
+     *
+     * @return RuleError[]
+     */
+    private function assertImmutablePropertyIsNotPublic(Node\Stmt\Property $property): array
+    {
+        $propertyName = Converter::propertyToString($property);
+        $propertyIsImmutable = $this->isImmutable || in_array($propertyName, $this->immutableProperties);
+
+        if ($propertyIsImmutable && $property->isPublic()) {
+            return [
+                RuleErrorBuilder::message(sprintf(
+                    'Property "%s" is declared immutable, but is public and therefore mutable',
+                    $propertyName
+                ))->build(),
+            ];
+        }
+
+        return [];
     }
 }

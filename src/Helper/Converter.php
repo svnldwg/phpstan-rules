@@ -13,15 +13,20 @@ class Converter
      *
      * @return string[]
      */
-    public static function propertyStringNames(array $properties)
+    public static function propertyStringNames(array $properties): array
     {
         return array_map(static function (Node\Stmt\Property $property): string {
-            $firstProp = reset($property->props);
-            if ($firstProp === false) {
-                return '';
-            }
-
-            return (string)$firstProp->name;
+            return static::propertyToString($property);
         }, $properties);
+    }
+
+    public static function propertyToString(Node\Stmt\Property $property): string
+    {
+        $firstProp = reset($property->props);
+        if ($firstProp === false) {
+            return '';
+        }
+
+        return (string)$firstProp->name;
     }
 }

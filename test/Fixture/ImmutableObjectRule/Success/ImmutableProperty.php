@@ -6,6 +6,8 @@ namespace Svnldwg\PHPStan\Test\Fixture\ImmutableObjectRule\Success;
 
 class ImmutableProperty
 {
+    public $mutablesCanBePublic;
+
     /** @immutable */
     private $value;
 

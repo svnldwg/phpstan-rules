@@ -88,6 +88,27 @@ final class ImmutableObjectRuleTest extends AbstractTestCase
                     13,
                 ],
             ],
+            'public-immutable-class-property' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/PublicImmutableProperty/PublicImmutableClassProperty.php',
+                [
+                    'Property "shouldNotBePublic" is declared immutable, but is public and therefore mutable',
+                    12,
+                ],
+            ],
+            'public-immutable-property' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/PublicImmutableProperty/PublicImmutableProperty.php',
+                [
+                    'Property "shouldNotBePublic" is declared immutable, but is public and therefore mutable',
+                    10,
+                ],
+            ],
+            'public-immutable-property-inheritance' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/PublicImmutableProperty/Inheritance.php',
+                [
+                    'Property "shouldNotBePublicBecauseParentIsImmutable" is declared immutable, but is public and therefore mutable',
+                    9,
+                ],
+            ],
         ];
 
         foreach ($paths as $description => [$path, $error]) {
