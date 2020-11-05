@@ -109,6 +109,13 @@ final class ImmutableObjectRuleTest extends AbstractTestCase
                     9,
                 ],
             ],
+            'immutable-parent-property' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/Inheritance/ImmutableParentProperty/ChildClass.php',
+                [
+                    'Property is declared immutable, but class property "foo" is modified in method "set"',
+                    11,
+                ],
+            ],
         ];
 
         foreach ($paths as $description => [$path, $error]) {
