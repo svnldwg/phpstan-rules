@@ -22,7 +22,7 @@ class AnnotationParser
             return false;
         }
 
-        return self::isWhitelisted($classNode, $annotations);
+        return self::hasNodeImmutableAnnotation($classNode, $annotations);
     }
 
     /**
@@ -42,7 +42,7 @@ class AnnotationParser
 
         $classProperties = NodeParser::getClassProperties($classNode);
         foreach ($classProperties as $property) {
-            $whitelisted = self::isWhitelisted($property, $annotations);
+            $whitelisted = self::hasNodeImmutableAnnotation($property, $annotations);
             if ($whitelisted) {
                 foreach ($property->props as $prop) {
                     $whitelistedProperties[] = (string)$prop->name;
@@ -79,7 +79,7 @@ class AnnotationParser
      *
      * @return bool
      */
-    private static function isWhitelisted(Node $node, array $whitelistAnnotations): bool
+    public static function hasNodeImmutableAnnotation(Node $node, array $whitelistAnnotations): bool
     {
         $nodeAnnotations = self::getAnnotations($node);
 

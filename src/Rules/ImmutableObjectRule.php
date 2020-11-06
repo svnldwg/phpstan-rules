@@ -59,6 +59,10 @@ class ImmutableObjectRule implements Rule
             return [];
         }
 
+        if ($scope->getFunctionName() === '__construct') {
+            return [];
+        }
+
         $this->detectImmutableProperties($scope);
 
         $isImmutable = $this->isImmutable;
@@ -86,10 +90,6 @@ class ImmutableObjectRule implements Rule
         if (!$node->var instanceof Node\Expr\PropertyFetch
             && !$node->var instanceof Node\Expr\StaticPropertyFetch
         ) {
-            return [];
-        }
-
-        if ($scope->getFunctionName() === '__construct') {
             return [];
         }
 
@@ -154,9 +154,16 @@ class ImmutableObjectRule implements Rule
                 $hasImmutableParent = true;
 
                 $immutableParentProperties += Converter::propertyStringNames(NodeParser::getNonPrivateProperties($classNode));
+
+                continue;
             }
 
-            // @TODO: detect non private parent properties annotated as immutable (instead of whole class)
+            $nonPrivateParentProperties = NodeParser::getNonPrivateProperties($classNode);
+            foreach ($nonPrivateParentProperties as $property) {
+                if (AnnotationParser::hasNodeImmutableAnnotation($property, self::WHITELISTED_ANNOTATIONS)) {
+                    $immutableParentProperties[] = Converter::propertyToString($property);
+                }
+            }
         }
 
         return ['properties' => $immutableParentProperties, 'hasImmutableParent' => $hasImmutableParent];
