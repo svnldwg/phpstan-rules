@@ -33,9 +33,11 @@ This package provides the following rules for use with [`phpstan/phpstan`](https
 
 ### `ImmutableObjectRule`
 
-This rule reports an error when a class tagged as immutable is mutable. This can be used for example to ensure that value objects are always immutable.
+This rule reports an error when a class or class property tagged as immutable is mutable. This can be used for example to ensure that value objects are always immutable.
 
-:bulb: Classes can be tagged as immutable by adding the annotation `@psalm-immutable` or `@immutable` to the class phpdoc.
+:bulb: Classes or properties can be tagged as immutable by adding the annotation `@psalm-immutable` or `@immutable` to the phpdoc.
+
+:bulb: The immutability rule also asserts that immutable properties are not mutated in child classes
 
 ## License
 
