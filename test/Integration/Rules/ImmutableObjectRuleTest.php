@@ -6,11 +6,8 @@ namespace Svnldwg\PHPStan\Test\Integration\Rules;
 
 use PhpParser\Lexer;
 use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\NodeVisitor\NodeConnectingVisitor;
 use PhpParser\Parser\Php7;
-use PHPStan\NodeVisitor\StatementOrderVisitor;
-use PHPStan\Parser\DirectParser;
-use PHPStan\Parser\NodeChildrenVisitor;
+use PHPStan\Parser\SimpleParser;
 use PHPStan\Rules\Rule;
 use Svnldwg\PHPStan\Rules\ImmutableObjectRule;
 use Svnldwg\PHPStan\Test\Integration\AbstractTestCase;
@@ -116,6 +113,13 @@ final class ImmutableObjectRuleTest extends AbstractTestCase
                     11,
                 ],
             ],
+            'class-with-immutable-attribute' => [
+                __DIR__ . '/../../Fixture/ImmutableObjectRule/Failure/Attributes/ClassWithImmutableAttribute.php',
+                [
+                    'Property is declared immutable, but class property "foo" is modified in method "set"',
+                    11,
+                ],
+            ],
         ];
 
         foreach ($paths as $description => [$path, $error]) {
@@ -134,13 +138,9 @@ final class ImmutableObjectRuleTest extends AbstractTestCase
         $lexer = new Lexer();
 
         return new ImmutableObjectRule(
-            new DirectParser(
+            new SimpleParser(
                 new Php7($lexer),
-                $lexer,
-                new NameResolver(),
-                new NodeConnectingVisitor(),
-                new StatementOrderVisitor(),
-                new NodeChildrenVisitor()
+                new NameResolver()
             )
         );
     }

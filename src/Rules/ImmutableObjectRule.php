@@ -12,6 +12,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 use Svnldwg\PHPStan\Helper\AnnotationParser;
+use Svnldwg\PHPStan\Helper\AttributesParser;
 use Svnldwg\PHPStan\Helper\BackwardsIterator;
 use Svnldwg\PHPStan\Helper\Converter;
 use Svnldwg\PHPStan\Helper\NodeParser;
@@ -24,6 +25,10 @@ class ImmutableObjectRule implements Rule
     private const WHITELISTED_ANNOTATIONS = [
         'psalm-immutable',
         'immutable',
+    ];
+
+    private const WHITELISTED_ATTRIBUTES = [
+        'Immutable',
     ];
 
     /** @var \PHPStan\Parser\Parser */
@@ -64,6 +69,9 @@ class ImmutableObjectRule implements Rule
         }
 
         $this->detectImmutableProperties($scope);
+        echo $scope->getFile() . PHP_EOL;
+        print_r($this->immutableProperties);
+        echo '=======' . PHP_EOL;
 
         $isImmutable = $this->isImmutable;
         $immutableProperties = $this->immutableProperties;
@@ -150,7 +158,10 @@ class ImmutableObjectRule implements Rule
                 continue;
             }
 
-            if ($hasImmutableParent || AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes)) {
+            if ($hasImmutableParent
+                || AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes)
+                || AttributesParser::classHasAttribute(self::WHITELISTED_ATTRIBUTES, $nodes)
+            ) {
                 $hasImmutableParent = true;
 
                 $immutableParentProperties += Converter::propertyStringNames(NodeParser::getNonPrivateProperties($classNode));
@@ -160,7 +171,9 @@ class ImmutableObjectRule implements Rule
 
             $nonPrivateParentProperties = NodeParser::getNonPrivateProperties($classNode);
             foreach ($nonPrivateParentProperties as $property) {
-                if (AnnotationParser::hasNodeImmutableAnnotation($property, self::WHITELISTED_ANNOTATIONS)) {
+                if (AnnotationParser::hasNodeImmutableAnnotation($property, self::WHITELISTED_ANNOTATIONS)
+                    || AttributesParser::hasNodeAttribute($property, self::WHITELISTED_ATTRIBUTES)
+                ) {
                     $immutableParentProperties[] = Converter::propertyToString($property);
                 }
             }
@@ -190,7 +203,9 @@ class ImmutableObjectRule implements Rule
         ['properties' => $immutableProperties, 'hasImmutableParent' => $hasImmutableParent] = $this->getInheritedImmutableProperties($scope);
 
         $nodes = $this->parser->parseFile($scope->getFile());
-        $isImmutable = $hasImmutableParent || AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes);
+        $isImmutable = $hasImmutableParent
+            || AnnotationParser::classHasAnnotation(self::WHITELISTED_ANNOTATIONS, $nodes)
+            || AttributesParser::classHasAttribute(self::WHITELISTED_ATTRIBUTES, $nodes);
 
         if (!empty($immutableProperties)) {
             $classNode = NodeParser::getClassNode($nodes);
@@ -202,7 +217,11 @@ class ImmutableObjectRule implements Rule
         }
 
         if (empty($immutableProperties)) {
-            $immutableProperties = AnnotationParser::propertiesWithWhitelistedAnnotations(self::WHITELISTED_ANNOTATIONS, $nodes);
+            $immutableProperties = array_merge(
+                AnnotationParser::propertiesWithWhitelistedAnnotations(self::WHITELISTED_ANNOTATIONS, $nodes),
+                AttributesParser::propertiesWithAttribute(self::WHITELISTED_ATTRIBUTES, $nodes)
+            );
+            $immutableProperties = array_unique($immutableProperties);
         }
 
         $this->immutableProperties = $immutableProperties;
