@@ -18,11 +18,12 @@
     "php": "^7.2 | ^8.0",
     "ext-mbstring": "*",
     "nikic/php-parser": "^4.2.3",
-    "phpstan/phpstan": "^0.12.0"
+    "phpstan/phpstan": ">=0.11"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^2.16.4",
-    "phpunit/phpunit": "^8.0 || ^9.0"
+    "phpunit/phpunit": "^8.0 || ^9.0",
+    "phpstan/phpstan": "^0.12"
   },
   "config": {
     "preferred-install": "dist",
