@@ -21,11 +21,6 @@
         stopOnSkipped="false"
         verbose="true"
 >
-  <coverage includeUncoveredFiles="true" processUncoveredFiles="true">
-    <include>
-      <directory suffix=".php">../../src/</directory>
-    </include>
-  </coverage>
   <testsuites>
     <testsuite name="Integration Tests">
       <directory>.</directory>
