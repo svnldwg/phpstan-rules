@@ -4,6 +4,12 @@ Provides additional rules for [`phpstan/phpstan`](https://github.com/phpstan/php
 
 This package is still in development, please report any issues or bugs.
 
+![CI Status](https://github.com/svnldwg/phpstan-rules/workflows/Tests%20&%20Code%20Check/badge.svg)
+![GitHub last commit](https://img.shields.io/github/last-commit/svnldwg/phpstan-rules)
+![PHPStan](https://img.shields.io/badge/PHPStan-Level%208-brightgreen.svg?style=flat)
+![PHP Versions](https://img.shields.io/badge/php-%3E%3D%207.2-8892BF.svg)
+[![Downloads](https://img.shields.io/packagist/dt/svnldwg/phpstan-rules.svg?v1)](https://packagist.org/packages/svnldwg/phpstan-rules)
+
 ## Installation
 
 Run
