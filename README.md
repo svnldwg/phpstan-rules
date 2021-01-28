@@ -35,8 +35,6 @@ includes:
 
 This package provides the following rules for use with [`phpstan/phpstan`](https://github.com/phpstan/phpstan):
 
-* [`Ergebnis\PHPStan\Rules\Classes\FinalRule`](https://github.com/svnldwg/phpstan-rules#classesfinalrule)
-
 ### `ImmutableObjectRule`
 
 This rule reports an error when a class or class property tagged as immutable is mutable. This can be used for example to ensure that value objects are always immutable.
